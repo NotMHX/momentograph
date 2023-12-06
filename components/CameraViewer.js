@@ -6,7 +6,6 @@ export default function CameraViewer() {
   const [cameraPermission, setCameraPermission] = useState(null);
 
   const [camera, setCamera] = useState(null);
-  const [imageUri, setImageUri] = useState(null);
   const [type, setType] = useState(Camera.Constants.Type.back);
 
   const permisionFunction = async () => {
@@ -34,8 +33,6 @@ export default function CameraViewer() {
           ratio={"1:1"}
         />
       </View>
-
-      {imageUri && <Image source={{ uri: imageUri }} style={{ flex: 1 }} />}
     </View>
   );
 }
