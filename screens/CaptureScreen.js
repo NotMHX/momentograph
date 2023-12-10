@@ -1,30 +1,53 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Button } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, Text, StyleSheet, Button, Image } from "react-native";
 import CameraViewer from "../components/CameraViewer";
+import { Camera } from "expo-camera";
+
 // import { startRecording } from "../components/RecordViewer";
 import { Header } from "react-native/Libraries/NewAppScreen";
 import { Audio } from "expo-av";
 import * as Location from "expo-location";
 
-const [image, setImage] = useState("../assets/icon.png");
-const [time, setTime] = useState("2023");
 // const [recording, setRecording] = useState("");
 // const [sound, setSound] = useState("");
 
 export default function CaptureScreen() {
+  const [image, setImage] = useState("../assets/icon.png");
+  const [time, setTime] = useState("placeholder");
+
   const createMoment = async () => {
-    setImage(await takePicture(camera));
+    setImage(await takePictureAsync());
     setTime(new Date().getDate());
     // setRecording(startRecording());
   };
 
-  const takePicture = async () => {
-    if (camera) {
-      const data = await camera.takePictureAsync(null);
+  // camera logic
+  const [cameraPermission, setCameraPermission] = useState(null);
+  const cameraReference = useRef(null);
+  const [type, setType] = useState(Camera.Constants.Type.back);
+
+  const takePictureAsync = async () => {
+    if (cameraReference.current) {
+      const data = await cameraReference.current.takePictureAsync(null);
       console.log(data.uri);
       return data.uri;
     }
   };
+
+  const permisionFunction = async () => {
+    // here is how you can get the camera permission
+    const cameraPermission = await Camera.requestCameraPermissionsAsync();
+
+    setCameraPermission(cameraPermission.status === "granted");
+
+    if (cameraPermission.status !== "granted") {
+      alert("Permission for media access needed.");
+    }
+  };
+
+  useEffect(() => {
+    permisionFunction();
+  }, []);
 
   /* async function playSound() {
     console.log("Loading Sound");
@@ -37,15 +60,15 @@ export default function CaptureScreen() {
 
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <CameraViewer />
+      <CameraViewer reference={cameraReference} type={type} />
       <Button
         style={styles.button}
         title={"Take Picture"}
         onPress={createMoment}
       />
 
-      <h1>Result</h1>
-      <img src={image}></img>
+      <Text>Result</Text>
+      <Image src={image}></Image>
       <Text>{time}</Text>
       {/* <Button title="Play Sound" onPress={playSound()} /> */}
     </View>
