@@ -1,14 +1,10 @@
 import * as React from "react";
 import { View, Text, StyleSheet, Button } from "react-native";
-import CameraViewer from "../components/CameraViewer";
+import CameraViewer, { takePhoto } from "../components/CameraViewer";
 
 export default function CaptureScreen() {
-  const takePicture = async () => {
-    if (camera) {
-      const data = await camera.takePictureAsync(null);
-      console.log(data.uri);
-      setImageUri(data.uri);
-    }
+  const createMoment = async () => {
+    const image = takePhoto();
   };
 
   return (
@@ -17,7 +13,7 @@ export default function CaptureScreen() {
       <Button
         style={styles.button}
         title={"Take Picture"}
-        onPress={takePicture}
+        onPress={createMoment}
       />
     </View>
   );

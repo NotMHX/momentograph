@@ -2,10 +2,18 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, View, Image } from "react-native";
 import { Camera } from "expo-camera";
 
-export default function CameraViewer() {
-  const [cameraPermission, setCameraPermission] = useState(null);
-
+function useChange() {
   const [camera, setCamera] = useState(null);
+  function set(value) {
+    setCamera(value);
+  }
+
+  return { set, camera };
+}
+
+export default function CameraViewer() {
+  const { set, camera } = useChange();
+  const [cameraPermission, setCameraPermission] = useState(null);
   const [imageUri, setImageUri] = useState(null);
   const [type, setType] = useState(Camera.Constants.Type.back);
 
@@ -28,7 +36,7 @@ export default function CameraViewer() {
     <View>
       <View style={styles.cameraContainer}>
         <Camera
-          ref={(ref) => setCamera(ref)}
+          ref={(ref) => set(ref)}
           style={styles.fixedRatio}
           type={type}
           ratio={"1:1"}
@@ -38,6 +46,17 @@ export default function CameraViewer() {
       {imageUri && <Image source={{ uri: imageUri }} style={{ flex: 1 }} />}
     </View>
   );
+}
+
+export async function takePhoto() {
+  const { set, camera } = useChange();
+  if (camera) {
+    const data = await camera.takePictureAsync(null);
+    console.log(data.uri);
+    return data.uri;
+  } else {
+    return "no image found";
+  }
 }
 
 const styles = StyleSheet.create({
