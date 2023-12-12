@@ -1,7 +1,7 @@
 import { StyleSheet, View } from "react-native";
 import { Camera } from "expo-camera";
 
-export default function CameraViewer(reference, type) {
+export default function CameraViewer({ reference, type }) {
   return (
     <View style={styles.cameraContainer}>
       <Camera

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, createRef } from "react";
 import { View, Text, StyleSheet, Button, Image } from "react-native";
 import CameraViewer from "../components/CameraViewer";
 import { Camera } from "expo-camera";
@@ -12,7 +12,7 @@ import * as Location from "expo-location";
 // const [sound, setSound] = useState("");
 
 export default function CaptureScreen() {
-  const [image, setImage] = useState("../assets/icon.png");
+  const [image, setImage] = useState(null);
   const [time, setTime] = useState("placeholder");
 
   const createMoment = async () => {
@@ -22,7 +22,7 @@ export default function CaptureScreen() {
   };
 
   // camera logic
-  const [cameraPermission, setCameraPermission] = useState(null);
+  const [cameraPermission, setCameraPermission] = useState();
   const cameraReference = useRef(null);
   const [type, setType] = useState(Camera.Constants.Type.back);
 
@@ -68,7 +68,7 @@ export default function CaptureScreen() {
       />
 
       <Text>Result</Text>
-      <Image src={image}></Image>
+      <Image source={{ uri: image }}></Image>
       <Text>{time}</Text>
       {/* <Button title="Play Sound" onPress={playSound()} /> */}
     </View>
