@@ -13,9 +13,6 @@ import * as Location from "expo-location";
 // const [sound, setSound] = useState("");
 
 export default function CaptureScreen() {
-  const [image, setImage] = useState(null);
-  const [time, setTime] = useState("placeholder");
-
   let randomUUID = () => {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
       /[xy]/g,
@@ -28,10 +25,10 @@ export default function CaptureScreen() {
   };
 
   const createMoment = async () => {
-    setImage(await takePictureAsync());
-    setTime(new Date().toLocaleString());
+    const image = await takePictureAsync();
+    const time = new Date().toLocaleString();
     // setRecording(startRecording());
-    await saveMoment(image, time);
+    saveMoment(image, time);
   };
 
   const saveMoment = async (newImage, newTime) => {
@@ -40,10 +37,12 @@ export default function CaptureScreen() {
     const newJson = {
       image: newImage,
       time: newTime,
-      // recording etc.
     };
 
-    await AsyncStorage.setItem(newKey, newJson.toString());
+    console.log("key: " + newKey);
+    console.log("mit stringify: " + JSON.stringify(newJson));
+
+    await AsyncStorage.setItem(newKey, JSON.stringify(newJson));
   };
 
   // camera logic
@@ -91,10 +90,6 @@ export default function CaptureScreen() {
         title={"Take Picture"}
         onPress={createMoment}
       />
-
-      <Text style="text-weight: bold;">Result</Text>
-      <Image source={{ uri: image }}></Image>
-      <Text>{time}</Text>
       {/* <Button title="Play Sound" onPress={playSound()} /> */}
     </View>
   );
