@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, createRef } from "react";
 import { View, Text, StyleSheet, Button, Image } from "react-native";
 import CameraViewer from "../components/CameraViewer";
 import { Camera } from "expo-camera";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // import { startRecording } from "../components/RecordViewer";
 import { Header } from "react-native/Libraries/NewAppScreen";
@@ -15,10 +16,34 @@ export default function CaptureScreen() {
   const [image, setImage] = useState(null);
   const [time, setTime] = useState("placeholder");
 
+  let randomUUID = () => {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+      /[xy]/g,
+      function (c) {
+        let r = (Math.random() * 16) | 0,
+          v = c == "x" ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      }
+    );
+  };
+
   const createMoment = async () => {
     setImage(await takePictureAsync());
-    setTime(new Date().getDate());
+    setTime(new Date().toLocaleString());
     // setRecording(startRecording());
+    await saveMoment(image, time);
+  };
+
+  const saveMoment = async (newImage, newTime) => {
+    const newKey = randomUUID();
+
+    const newJson = {
+      image: newImage,
+      time: newTime,
+      // recording etc.
+    };
+
+    await AsyncStorage.setItem(newKey, newJson.toString());
   };
 
   // camera logic
@@ -67,7 +92,7 @@ export default function CaptureScreen() {
         onPress={createMoment}
       />
 
-      <Text>Result</Text>
+      <Text style="text-weight: bold;">Result</Text>
       <Image source={{ uri: image }}></Image>
       <Text>{time}</Text>
       {/* <Button title="Play Sound" onPress={playSound()} /> */}
