@@ -29,20 +29,27 @@ export default function MomentsScreen() {
 
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Look at all your moments!</Text>
+      <Text>Here you go</Text>
       {moments.map((current) => {
         const index = moments.indexOf(current);
         const key = allKeys[index];
-        console.log(current.image + " " + current.time);
+        console.log("image #" + index + ": " + current.image);
         if (current) {
           return (
             <View style={styles.listEntry} id={key}>
-              <Image source={{ uri: current.image }} />
+              <Image
+                style={styles.imageEntry}
+                source={{ uri: JSON.stringify(current.image) }}
+              />
               <Text>{current.time}</Text>
             </View>
           );
         }
-        return <Text>No moments captured yet!</Text>;
+        return (
+          <View>
+            <Text>No moments captured yet!</Text>
+          </View>
+        );
       })}
     </View>
   );
@@ -54,5 +61,10 @@ const styles = StyleSheet.create({
   },
   listEntry: {
     marginTop: "10px",
+  },
+  imageEntry: {
+    width: 100, // Set your desired width
+    height: 100, // Set your desired height
+    resizeMode: "cover", // Adjust as needed
   },
 });
