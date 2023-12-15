@@ -3,22 +3,22 @@ import { View, Text, StyleSheet, Image } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function MomentsScreen() {
-  const [momentList, setMomentList] = useState([]);
-  const [testing, setTesting] = useState("nothing");
   const [allKeys, setAllKeys] = useState([]);
+  const [moments, setMoments] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setAllKeys(await AsyncStorage.getAllKeys());
+        console.log("All keys: " + allKeys.toString());
+
         const moments = await Promise.all(
-          allKeys.map((currentKey) => {
-            const { key, currentMoment } = AsyncStorage.getItem(currentKey);
+          allKeys.map(async (currentKey) => {
+            const currentMoment = await AsyncStorage.getItem(currentKey);
             return JSON.parse(currentMoment);
           })
         );
-        setTesting(moments);
-        setMomentList(moments);
+        setMoments(moments);
       } catch (error) {
         console.error("Error fetching data ", error);
       }
@@ -30,15 +30,20 @@ export default function MomentsScreen() {
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <Text>Look at all your moments!</Text>
-      <Text>{allKeys.toString()}</Text>
-      <View>
-        {Object.entries(momentList).map((currentItem) => (
-          <View style={styles.listEntry}>
-            <Image source={{ uri: currentItem.image }}></Image>
-            <Text>{currentItem.time}</Text>
-          </View>
-        ))}
-      </View>
+      {moments.map((current) => {
+        const index = moments.indexOf(current);
+        const key = allKeys[index];
+        console.log(current.image + " " + current.time);
+        if (current) {
+          return (
+            <View style={styles.listEntry} id={key}>
+              <Image source={{ uri: current.image }} />
+              <Text>{current.time}</Text>
+            </View>
+          );
+        }
+        return <Text>No moments captured yet!</Text>;
+      })}
     </View>
   );
 }

@@ -14,14 +14,11 @@ import * as Location from "expo-location";
 
 export default function CaptureScreen() {
   let randomUUID = () => {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
-      /[xy]/g,
-      function (c) {
-        let r = (Math.random() * 16) | 0,
-          v = c == "x" ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-      }
-    );
+    return "xxxxxxxx-xxxx-4xxx".replace(/[xy]/g, function (c) {
+      let r = (Math.random() * 16) | 0,
+        v = c == "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
   };
 
   const createMoment = async () => {
@@ -39,10 +36,13 @@ export default function CaptureScreen() {
       time: newTime,
     };
 
-    console.log("key: " + newKey);
-    console.log("mit stringify: " + JSON.stringify(newJson));
+    const newJsonString = JSON.stringify(newJson);
 
-    await AsyncStorage.setItem(newKey, JSON.stringify(newJson));
+    console.log("key: " + newKey);
+    console.log("mit stringify: " + newJsonString);
+    console.log("can it convert back? " + JSON.parse(newJsonString).image);
+
+    await AsyncStorage.setItem(newKey, newJsonString);
   };
 
   // camera logic
@@ -90,7 +90,6 @@ export default function CaptureScreen() {
         title={"Take Picture"}
         onPress={createMoment}
       />
-      {/* <Button title="Play Sound" onPress={playSound()} /> */}
     </View>
   );
 }
