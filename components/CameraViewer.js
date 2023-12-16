@@ -1,41 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { StyleSheet, View, Image } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { Camera } from "expo-camera";
 
-export default function CameraViewer() {
-  const [cameraPermission, setCameraPermission] = useState(null);
-
-  const [camera, setCamera] = useState(null);
-  const [imageUri, setImageUri] = useState(null);
-  const [type, setType] = useState(Camera.Constants.Type.back);
-
-  const permisionFunction = async () => {
-    // here is how you can get the camera permission
-    const cameraPermission = await Camera.requestCameraPermissionsAsync();
-
-    setCameraPermission(cameraPermission.status === "granted");
-
-    if (cameraPermission.status !== "granted") {
-      alert("Permission for media access needed.");
-    }
-  };
-
-  useEffect(() => {
-    permisionFunction();
-  }, []);
-
+export default function CameraViewer({ reference, type }) {
   return (
-    <View>
-      <View style={styles.cameraContainer}>
-        <Camera
-          ref={(ref) => setCamera(ref)}
-          style={styles.fixedRatio}
-          type={type}
-          ratio={"1:1"}
-        />
-      </View>
-
-      {imageUri && <Image source={{ uri: imageUri }} style={{ flex: 1 }} />}
+    <View style={styles.cameraContainer}>
+      <Camera
+        ref={reference}
+        style={styles.fixedRatio}
+        type={type}
+        ratio={"1:1"}
+      />
     </View>
   );
 }
