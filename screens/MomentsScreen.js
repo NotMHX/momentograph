@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet, Image, ScrollView } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function MomentsScreen() {
@@ -28,7 +28,13 @@ export default function MomentsScreen() {
   }, []);
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+    <ScrollView
+      style={{
+        flex: 1,
+        contentContainerStyle: "center",
+        contentContainerStyle: "center",
+      }}
+    >
       <Text>Here you go</Text>
       {moments.map((current) => {
         const index = moments.indexOf(current);
@@ -39,19 +45,19 @@ export default function MomentsScreen() {
             <View style={styles.listEntry} id={key}>
               <Image
                 style={styles.imageEntry}
-                source={{ uri: JSON.stringify(current.image) }}
+                source={{ uri: current.image }}
               />
               <Text>{current.time}</Text>
             </View>
           );
         }
         return (
-          <View>
+          <ScrollView>
             <Text>No moments captured yet!</Text>
-          </View>
+          </ScrollView>
         );
       })}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -60,7 +66,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listEntry: {
-    marginTop: "10px",
+    paddingTop: "10px",
   },
   imageEntry: {
     width: 100, // Set your desired width
