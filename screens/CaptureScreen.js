@@ -4,13 +4,10 @@ import CameraViewer from "../components/CameraViewer";
 import { Camera } from "expo-camera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// import { startRecording } from "../components/RecordViewer";
+import RecordViewer from "../components/RecordViewer";
 import { Header } from "react-native/Libraries/NewAppScreen";
 import { Audio } from "expo-av";
-import * as Location from "expo-location";
-
-// const [recording, setRecording] = useState("");
-// const [sound, setSound] = useState("");
+// import * as Location from "expo-location";
 
 export default function CaptureScreen() {
   let randomUUID = () => {
@@ -22,18 +19,23 @@ export default function CaptureScreen() {
   };
 
   const createMoment = async () => {
-    const image = await takePictureAsync();
-    const time = new Date().toLocaleString();
-    // setRecording(startRecording());
-    saveMoment(image, time);
+    try {
+      const image = await takePictureAsync();
+      const time = new Date().toLocaleString();
+      const recording = await RecordViewer.startRecording();
+      await saveMoment(image, time, recording);
+    } catch (error) {
+      console.error("Error creating moment: " + error);
+    }
   };
 
-  const saveMoment = async (newImage, newTime) => {
+  const saveMoment = async (newImage, newTime, newRecording) => {
     const newKey = randomUUID();
 
     const newJson = {
       image: newImage,
       time: newTime,
+      recording: newRecording,
     };
 
     const newJsonString = JSON.stringify(newJson);
@@ -53,7 +55,6 @@ export default function CaptureScreen() {
   const takePictureAsync = async () => {
     if (cameraReference.current) {
       const data = await cameraReference.current.takePictureAsync(null);
-      console.log(data.uri);
       return data.uri;
     }
   };
@@ -73,23 +74,19 @@ export default function CaptureScreen() {
     permisionFunction();
   }, []);
 
-  /* async function playSound() {
+  async function playSound() {
     console.log("Loading Sound");
     const { sound } = await Audio.Sound.createAsync(recording);
     setSound(sound);
 
     console.log("Playing Sound");
     await sound.playAsync();
-  } */
+  }
 
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <CameraViewer reference={cameraReference} type={type} />
-      <Button
-        style={styles.button}
-        title={"Take Picture"}
-        onPress={createMoment}
-      />
+      <Button style={styles.button} title={"Create!"} onPress={createMoment} />
     </View>
   );
 }
