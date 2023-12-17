@@ -1,15 +1,19 @@
 import { StyleSheet, View } from "react-native";
 import { Camera } from "expo-camera";
+import { useIsFocused } from "@react-navigation/native";
 
 export default function CameraViewer({ reference, type }) {
+  const isFocused = useIsFocused();
   return (
     <View style={styles.cameraContainer}>
-      <Camera
-        ref={reference}
-        style={styles.fixedRatio}
-        type={type}
-        ratio={"1:1"}
-      />
+      {isFocused && (
+        <Camera
+          ref={reference}
+          style={styles.fixedRatio}
+          type={type}
+          ratio={"1:1"}
+        />
+      )}
     </View>
   );
 }

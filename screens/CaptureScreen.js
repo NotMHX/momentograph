@@ -3,14 +3,9 @@ import { View, Text, StyleSheet, Button, Image } from "react-native";
 import CameraViewer from "../components/CameraViewer";
 import { Camera } from "expo-camera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-// import { startRecording } from "../components/RecordViewer";
-import { Header } from "react-native/Libraries/NewAppScreen";
-import { Audio } from "expo-av";
 import * as Location from "expo-location";
-
-// const [recording, setRecording] = useState("");
-// const [sound, setSound] = useState("");
+import { Magnetometer } from "expo-sensors";
+import { useBatteryLevel } from "expo-battery";
 
 export default function CaptureScreen() {
   let randomUUID = () => {
@@ -21,26 +16,42 @@ export default function CaptureScreen() {
     });
   };
 
+  const currentBattery = useBatteryLevel();
+
   const createMoment = async () => {
-    const image = await takePictureAsync();
-    const time = new Date().toLocaleString();
-    // setRecording(startRecording());
-    saveMoment(image, time);
+    try {
+      const image = await takePictureAsync();
+      const time = new Date().toLocaleString();
+      const location = await fetchCity();
+      const compass = await fetchCompass();
+      const battery = Math.round(currentBattery * 100, 1);
+      await saveMoment(image, time, location, compass, battery);
+    } catch (error) {
+      console.error("Error creating moment: " + error);
+    }
   };
 
-  const saveMoment = async (newImage, newTime) => {
+  const saveMoment = async (
+    newImage,
+    newTime,
+    newLocation,
+    newCompass,
+    newBattery
+  ) => {
     const newKey = randomUUID();
 
     const newJson = {
       image: newImage,
       time: newTime,
+      location: newLocation,
+      compass: newCompass,
+      battery: newBattery,
     };
 
     const newJsonString = JSON.stringify(newJson);
 
     console.log("key: " + newKey);
-    console.log("mit stringify: " + newJsonString);
-    console.log("can it convert back? " + JSON.parse(newJsonString).image);
+    console.log("moment: " + newJsonString);
 
     await AsyncStorage.setItem(newKey, newJsonString);
   };
@@ -49,11 +60,15 @@ export default function CaptureScreen() {
   const [cameraPermission, setCameraPermission] = useState();
   const cameraReference = useRef(null);
   const [type, setType] = useState(Camera.Constants.Type.back);
+  const [mag, setMag] = useState({
+    x: 0,
+    y: 0,
+    z: 0,
+  });
 
   const takePictureAsync = async () => {
     if (cameraReference.current) {
       const data = await cameraReference.current.takePictureAsync(null);
-      console.log(data.uri);
       return data.uri;
     }
   };
@@ -67,29 +82,89 @@ export default function CaptureScreen() {
     if (cameraPermission.status !== "granted") {
       alert("Permission for media access needed.");
     }
+
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      setErrorMsg("Permission to access location was denied");
+      return;
+    }
+  };
+
+  const fetchCity = async () => {
+    const location = await Location.getCurrentPositionAsync({});
+    const latitude = location.coords.latitude;
+    const longitude = location.coords.longitude;
+
+    const response = await fetch(
+      `https://geocode.maps.co/reverse?lat=${latitude}&lon=${longitude}`
+    );
+
+    const result = await response.json();
+
+    if (result.address.city) {
+      // if recorded in a city
+      return result.address.city + ", " + result.address.country;
+    } else if (result.address.village) {
+      // if recorded in a village
+      return result.address.village + ", " + result.address.country;
+    } else {
+      // if neither is detected
+      return result.address.country;
+    }
+  };
+
+  const fetchCompass = async () => {
+    const subscription = Magnetometer.addListener((result) => {
+      setMag(result);
+      subscription.remove(); // Remove the listener after getting the data
+    });
+    console.log(mag.x);
+    const angle = getAngle(mag);
+    const angleDir = getDirection(angle);
+    return angle + "° " + angleDir;
+  };
+
+  const getDirection = (degree) => {
+    if (degree >= 22.5 && degree < 67.5) {
+      return "NE";
+    } else if (degree >= 67.5 && degree < 112.5) {
+      return "E";
+    } else if (degree >= 112.5 && degree < 157.5) {
+      return "SE";
+    } else if (degree >= 157.5 && degree < 202.5) {
+      return "S";
+    } else if (degree >= 202.5 && degree < 247.5) {
+      return "SW";
+    } else if (degree >= 247.5 && degree < 292.5) {
+      return "W";
+    } else if (degree >= 292.5 && degree < 337.5) {
+      return "NW";
+    } else {
+      return "N";
+    }
+  };
+
+  const getAngle = (magnetometer) => {
+    let angle = 0;
+    if (magnetometer) {
+      let { x, y, z } = magnetometer;
+      if (Math.atan2(y, x) >= 0) {
+        angle = Math.atan2(y, x) * (180 / Math.PI);
+      } else {
+        angle = (Math.atan2(y, x) + 2 * Math.PI) * (180 / Math.PI);
+      }
+    }
+    return Math.round(angle);
   };
 
   useEffect(() => {
     permisionFunction();
   }, []);
 
-  /* async function playSound() {
-    console.log("Loading Sound");
-    const { sound } = await Audio.Sound.createAsync(recording);
-    setSound(sound);
-
-    console.log("Playing Sound");
-    await sound.playAsync();
-  } */
-
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <CameraViewer reference={cameraReference} type={type} />
-      <Button
-        style={styles.button}
-        title={"Take Picture"}
-        onPress={createMoment}
-      />
+      <Button style={styles.button} title={"Create!"} onPress={createMoment} />
     </View>
   );
 }

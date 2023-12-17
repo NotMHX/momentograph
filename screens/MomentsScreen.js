@@ -5,25 +5,30 @@ import {
   StyleSheet,
   Image,
   ScrollView,
-  Modal,
   Pressable,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DetailsModal from "./DetailsModal";
 
-export default function MomentsScreen() {
+export default function MomentsScreen({ navigation }) {
   const [allKeys, setAllKeys] = useState([]);
   const [moments, setMoments] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      const allKeys = await fetchKeys();
-      setAllKeys(allKeys);
-      const moments = await fetchImages(allKeys);
-      setMoments(moments);
-    })();
-  }, []);
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchData();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const fetchData = async () => {
+    const fetchedKeys = await fetchKeys();
+    setAllKeys(fetchedKeys);
+    const fetchedMoments = await fetchImages(fetchedKeys);
+    setMoments(fetchedMoments);
+  };
 
   return (
     <ScrollView
@@ -34,10 +39,13 @@ export default function MomentsScreen() {
       }}
     >
       {moments.map((current) => {
-        // console.log("image #" + index + ": " + current.image);
+        const index = moments.indexOf(current);
+        const key = allKeys[index];
+        console.log("key after fetch " + key);
+        console.log("image #" + index + ": " + current.image);
         if (current) {
           return (
-            <View style={styles.listEntry}>
+            <View style={styles.listEntry} key={key}>
               <Pressable onPress={toggleModal}>
                 <Image
                   style={styles.imageEntry}
@@ -48,6 +56,8 @@ export default function MomentsScreen() {
                 visible={modalVisible}
                 toggle={toggleModal}
                 moment={current}
+                passedKey={key}
+                key={key}
               />
             </View>
           );
@@ -82,6 +92,7 @@ export default function MomentsScreen() {
 
   function toggleModal() {
     setModalVisible(!modalVisible);
+    fetchData();
   }
 }
 
