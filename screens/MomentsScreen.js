@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Image,
   ScrollView,
-  Modal,
   Pressable,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -42,8 +41,8 @@ export default function MomentsScreen({ navigation }) {
       {moments.map((current) => {
         const index = moments.indexOf(current);
         const key = allKeys[index];
-        // console.log("key after fetch " + key);
-        // console.log("image #" + index + ": " + current.image);
+        console.log("key after fetch " + key);
+        console.log("image #" + index + ": " + current.image);
         if (current) {
           return (
             <View style={styles.listEntry} key={key}>
@@ -58,6 +57,7 @@ export default function MomentsScreen({ navigation }) {
                 toggle={toggleModal}
                 moment={current}
                 passedKey={key}
+                key={key}
               />
             </View>
           );

@@ -12,7 +12,9 @@ export default function DetailsModal({ visible, toggle, moment, passedKey }) {
         <Image style={styles.imageEntry} source={{ uri: moment.image }} />
         <Text>Time: {moment.time}</Text>
         <Text>Location: {moment.location}</Text>
-        <Text>Other details are being added soon!</Text>
+        <Text>Compass: {moment.compass}</Text>
+        <Text>Battery status: {moment.battery}%</Text>
+        {moment.battery < 30 && <Text>Charge your phone!</Text>}
         {!showConfirmation && (
           <View>
             <Button

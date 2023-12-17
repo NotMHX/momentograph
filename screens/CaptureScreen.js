@@ -4,6 +4,8 @@ import CameraViewer from "../components/CameraViewer";
 import { Camera } from "expo-camera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
+import { Magnetometer } from "expo-sensors";
+import { useBatteryLevel } from "expo-battery";
 
 export default function CaptureScreen() {
   let randomUUID = () => {
@@ -14,31 +16,42 @@ export default function CaptureScreen() {
     });
   };
 
+  const currentBattery = useBatteryLevel();
+
   const createMoment = async () => {
     try {
       const image = await takePictureAsync();
       const time = new Date().toLocaleString();
       const location = await fetchCity();
-      await saveMoment(image, time, location);
+      const compass = await fetchCompass();
+      const battery = Math.round(currentBattery * 100, 1);
+      await saveMoment(image, time, location, compass, battery);
     } catch (error) {
       console.error("Error creating moment: " + error);
     }
   };
 
-  const saveMoment = async (newImage, newTime, newLocation) => {
+  const saveMoment = async (
+    newImage,
+    newTime,
+    newLocation,
+    newCompass,
+    newBattery
+  ) => {
     const newKey = randomUUID();
 
     const newJson = {
       image: newImage,
       time: newTime,
       location: newLocation,
+      compass: newCompass,
+      battery: newBattery,
     };
 
     const newJsonString = JSON.stringify(newJson);
 
     console.log("key: " + newKey);
-    console.log("mit stringify: " + newJsonString);
-    console.log("can it convert back? " + JSON.parse(newJsonString).image);
+    console.log("moment: " + newJsonString);
 
     await AsyncStorage.setItem(newKey, newJsonString);
   };
@@ -47,6 +60,11 @@ export default function CaptureScreen() {
   const [cameraPermission, setCameraPermission] = useState();
   const cameraReference = useRef(null);
   const [type, setType] = useState(Camera.Constants.Type.back);
+  const [mag, setMag] = useState({
+    x: 0,
+    y: 0,
+    z: 0,
+  });
 
   const takePictureAsync = async () => {
     if (cameraReference.current) {
@@ -76,7 +94,6 @@ export default function CaptureScreen() {
     const location = await Location.getCurrentPositionAsync({});
     const latitude = location.coords.latitude;
     const longitude = location.coords.longitude;
-    console.log(latitude + ", " + longitude);
 
     const response = await fetch(
       `https://geocode.maps.co/reverse?lat=${latitude}&lon=${longitude}`
@@ -94,6 +111,50 @@ export default function CaptureScreen() {
       // if neither is detected
       return result.address.country;
     }
+  };
+
+  const fetchCompass = async () => {
+    const subscription = Magnetometer.addListener((result) => {
+      setMag(result);
+      subscription.remove(); // Remove the listener after getting the data
+    });
+    console.log(mag.x);
+    const angle = getAngle(mag);
+    const angleDir = getDirection(angle);
+    return angle + "° " + angleDir;
+  };
+
+  const getDirection = (degree) => {
+    if (degree >= 22.5 && degree < 67.5) {
+      return "NE";
+    } else if (degree >= 67.5 && degree < 112.5) {
+      return "E";
+    } else if (degree >= 112.5 && degree < 157.5) {
+      return "SE";
+    } else if (degree >= 157.5 && degree < 202.5) {
+      return "S";
+    } else if (degree >= 202.5 && degree < 247.5) {
+      return "SW";
+    } else if (degree >= 247.5 && degree < 292.5) {
+      return "W";
+    } else if (degree >= 292.5 && degree < 337.5) {
+      return "NW";
+    } else {
+      return "N";
+    }
+  };
+
+  const getAngle = (magnetometer) => {
+    let angle = 0;
+    if (magnetometer) {
+      let { x, y, z } = magnetometer;
+      if (Math.atan2(y, x) >= 0) {
+        angle = Math.atan2(y, x) * (180 / Math.PI);
+      } else {
+        angle = (Math.atan2(y, x) + 2 * Math.PI) * (180 / Math.PI);
+      }
+    }
+    return Math.round(angle);
   };
 
   useEffect(() => {
