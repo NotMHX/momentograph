@@ -3,11 +3,7 @@ import { View, Text, StyleSheet, Button, Image } from "react-native";
 import CameraViewer from "../components/CameraViewer";
 import { Camera } from "expo-camera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-import RecordViewer from "../components/RecordViewer";
-import { Header } from "react-native/Libraries/NewAppScreen";
-import { Audio } from "expo-av";
-// import * as Location from "expo-location";
+import * as Location from "expo-location";
 
 export default function CaptureScreen() {
   let randomUUID = () => {
@@ -22,20 +18,20 @@ export default function CaptureScreen() {
     try {
       const image = await takePictureAsync();
       const time = new Date().toLocaleString();
-      const recording = await RecordViewer.startRecording();
-      await saveMoment(image, time, recording);
+      const location = await fetchCity();
+      await saveMoment(image, time, location);
     } catch (error) {
       console.error("Error creating moment: " + error);
     }
   };
 
-  const saveMoment = async (newImage, newTime, newRecording) => {
+  const saveMoment = async (newImage, newTime, newLocation) => {
     const newKey = randomUUID();
 
     const newJson = {
       image: newImage,
       time: newTime,
-      recording: newRecording,
+      location: newLocation,
     };
 
     const newJsonString = JSON.stringify(newJson);
@@ -68,20 +64,41 @@ export default function CaptureScreen() {
     if (cameraPermission.status !== "granted") {
       alert("Permission for media access needed.");
     }
+
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      setErrorMsg("Permission to access location was denied");
+      return;
+    }
+  };
+
+  const fetchCity = async () => {
+    const location = await Location.getCurrentPositionAsync({});
+    const latitude = location.coords.latitude;
+    const longitude = location.coords.longitude;
+    console.log(latitude + ", " + longitude);
+
+    const response = await fetch(
+      `https://geocode.maps.co/reverse?lat=${latitude}&lon=${longitude}`
+    );
+
+    const result = await response.json();
+
+    if (result.address.city) {
+      // if recorded in a city
+      return result.address.city + ", " + result.address.country;
+    } else if (result.address.village) {
+      // if recorded in a village
+      return result.address.village + ", " + result.address.country;
+    } else {
+      // if neither is detected
+      return result.address.country;
+    }
   };
 
   useEffect(() => {
     permisionFunction();
   }, []);
-
-  async function playSound() {
-    console.log("Loading Sound");
-    const { sound } = await Audio.Sound.createAsync(recording);
-    setSound(sound);
-
-    console.log("Playing Sound");
-    await sound.playAsync();
-  }
 
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>

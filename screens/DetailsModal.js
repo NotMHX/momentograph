@@ -11,6 +11,7 @@ export default function DetailsModal({ visible, toggle, moment, passedKey }) {
         <Button style={styles.button} title={"Close"} onPress={toggle} />
         <Image style={styles.imageEntry} source={{ uri: moment.image }} />
         <Text>Time: {moment.time}</Text>
+        <Text>Location: {moment.location}</Text>
         <Text>Other details are being added soon!</Text>
         {!showConfirmation && (
           <View>
